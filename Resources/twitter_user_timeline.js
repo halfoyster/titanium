@@ -167,7 +167,17 @@ getTweets = function(screen_name) {
         actInd.hide();
         return arrow.show();
       };
-      return Ti.UI.currentWindow.add(tableView);
+      tableView.addEventListener("click", function(e) {
+        var webWindow;
+        tweet = tweets[e.index];
+        webWindow = Ti.UI.createWindow({
+          url: "twitter_tweet_window.js",
+          status_id: tweet.id_str,
+          screen_name: tweet.user.screen_name
+        });
+        return Ti.UI.currentTab.open(webWindow);
+      });
+      return win.add(tableView);
     } catch (error) {
       return alert(error);
     }
