@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+　　　　<string name="cancel">Cancel</string>
+
+　　　　<string name="title_attach_photo">Attach a photo</string>
+
+　　　　<string name="option_camera">Camera</string>
+　　　　<string name="option_library">Library</string>
+</resources>

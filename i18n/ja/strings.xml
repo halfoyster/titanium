@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+　　　　<string name="cancel">キャンセル</string>
+
+　　　　<string name="title_attach_photo">写真を添付</string>
+
+　　　　<string name="option_camera">撮影する</string>
+　　　　<string name="option_library">アルバムから選ぶ</string>
+</resources>
