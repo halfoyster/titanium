@@ -1,21 +1,101 @@
-var getTweets, twitter_name, win;
+var actInd, arrow, beginReloading, data, endReloading, lastUpdatedLabel, page, pulling, reloading, screen_name, statusHeader, statusLabel, statusUpdateButton, tableView, updateTimeline, win;
 var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 Ti.include('common_ui.js');
 Ti.include('common_date.js');
-twitter_name = 'appcelerator';
+screen_name = 'appcelerator';
 win = Ti.UI.currentWindow;
-win.title = '@' + twitter_name;
-getTweets = function(screen_name) {
-  var data, xhr;
-  data = [];
+win.title = '@' + screen_name;
+data = [];
+tableView = Ti.UI.createTableView({
+  data: data,
+  minRowHeight: 58
+});
+statusUpdateButton = Ti.UI.createButton({
+  systemButton: Ti.UI.iPhone.SystemButton.ADD
+});
+statusUpdateButton.addEventListener('click', function() {
+  var win2;
+  win2 = Ti.UI.createWindow({
+    url: 'twitter_status_update.js',
+    title: 'Status Update',
+    backgroundColor: '#fff'
+  });
+  return Ti.UI.currentTab.open(win2);
+});
+win.rightNavButton = statusUpdateButton;
+statusHeader = createStatusHeader();
+tableView.headerPullView = statusHeader;
+pulling = false;
+reloading = false;
+actInd = statusHeader.getChildren()[1];
+arrow = statusHeader.getChildren()[2];
+statusLabel = statusHeader.getChildren()[3];
+lastUpdatedLabel = statusHeader.getChildren()[4];
+page = 1;
+tableView.addEventListener('scroll', __bind(function(e) {
+  var offset, t;
+  offset = e.contentOffset.y;
+  if (offset <= -65.0 && !pulling) {
+    t = Ti.UI.create2DMatrix();
+    t = t.rotate(-180);
+    pulling = true;
+    arrow.animate({
+      transform: t,
+      duration: 180
+    });
+    return statusLabel.text = 'Release to refresh...';
+  } else if (pulling && offset > -65.0 && offset < 0) {
+    pulling = false;
+    t = Ti.UI.create2DMatrix();
+    arrow.animate({
+      transform: t,
+      duration: 180
+    });
+    return statusLabel.text = 'Pull down to refresh...';
+  }
+}, this));
+tableView.addEventListener('scrollEnd', __bind(function(e) {
+  if (pulling && !reloading && e.contentOffset.y <= -65.0) {
+    reloading = true;
+    pulling = false;
+    arrow.hide();
+    actInd.show();
+    statusLabel.text = 'Reloading...';
+    tableView.setContentInsets({
+      top: 60,
+      animated: true
+    });
+    arrow.transform = Ti.UI.create2DMatrix();
+    return beginReloading();
+  }
+}, this));
+beginReloading = function() {
+  return setTimeout(endReloading, 2000);
+};
+endReloading = function() {
+  updateTimeline(screen_name, this.page);
+  tableView.setContentInsets({
+    top: 0
+  }, {
+    animated: true
+  });
+  reloading = false;
+  lastUpdatedLabel.text = 'Last Updated: ' + formatDate();
+  statusLabel.text = 'Pull down to refresh...';
+  actInd.hide();
+  return arrow.show();
+};
+updateTimeline = function(screen_name, page) {
+  var xhr;
   xhr = Ti.Network.createHTTPClient();
   xhr.timeout = 1000000;
-  xhr.open('GET', 'http://api.twitter.com/1/statuses/user_timeline.json?screen_name=' + screen_name);
+  xhr.open('GET', "http://api.twitter.com/1/statuses/user_timeline.json?screen_name=" + screen_name + "&page=" + page);
   xhr.onload = function() {
-    var actInd, arrow, av, avatar, beginReloading, bgcolor, c, created_at, date_label, endReloading, lastUpdatedLabel, post_view, pulling, reloading, row, statusHeader, statusLabel, tableView, tweet, tweet_text, tweets, user, user_label, _ref;
+    var av, avatar, bgcolor, c, created_at, currentData, date_label, post_view, row, tweet, tweet_text, tweets, user, user_label, _ref;
     try {
       tweets = JSON.parse(this.responseText);
       c = 0;
+      currentData = [];
       while (c < tweets.length) {
         tweet = tweets[c].text;
         user = tweets[c].user.screen_name;
@@ -91,82 +171,10 @@ getTweets = function(screen_name) {
         post_view.add(tweet_text);
         row.add(post_view);
         row.className = 'item' + c;
-        data[c] = row;
+        currentData.push(row);
         c++;
       }
-      tableView = Ti.UI.createTableView({
-        data: data,
-        minRowHeight: 58
-      });
-      statusHeader = createStatusHeader();
-      tableView.headerPullView = statusHeader;
-      pulling = false;
-      reloading = false;
-      actInd = statusHeader.getChildren()[1];
-      arrow = statusHeader.getChildren()[2];
-      statusLabel = statusHeader.getChildren()[3];
-      lastUpdatedLabel = statusHeader.getChildren()[4];
-      tableView.addEventListener('scroll', __bind(function(e) {
-        var offset, t;
-        offset = e.contentOffset.y;
-        if (offset <= -65.0 && !pulling) {
-          t = Ti.UI.create2DMatrix();
-          t = t.rotate(-180);
-          pulling = true;
-          arrow.animate({
-            transform: t,
-            duration: 180
-          });
-          return statusLabel.text = 'Release to refresh...';
-        } else if (pulling && offset > -65.0 && offset < 0) {
-          pulling = false;
-          t = Ti.UI.create2DMatrix();
-          arrow.animate({
-            transform: t,
-            duration: 180
-          });
-          return statusLabel.text = 'Pull down to refresh...';
-        }
-      }, this));
-      tableView.addEventListener('scrollEnd', __bind(function(e) {
-        if (pulling && !reloading && e.contentOffset.y <= -65.0) {
-          reloading = true;
-          pulling = false;
-          arrow.hide();
-          actInd.show();
-          statusLabel.text = 'Reloading...';
-          tableView.setContentInsets({
-            top: 60,
-            animated: true
-          });
-          arrow.transform = Ti.UI.create2DMatrix();
-          return beginReloading();
-        }
-      }, this));
-      beginReloading = function() {
-        return setTimeout(endReloading, 2000);
-      };
-      endReloading = function() {
-        var lastRow;
-        lastRow = tweets.length;
-        c = lastRow;
-        while (c < lastRow + 10) {
-          tableView.appendRow({
-            title: 'Row ' + c
-          });
-          c++;
-        }
-        tableView.setContentInsets({
-          top: 0
-        }, {
-          animated: true
-        });
-        reloading = false;
-        lastUpdatedLabel.text = 'Last Updated: ' + formatDate();
-        statusLabel.text = 'Pull down to refresh...';
-        actInd.hide();
-        return arrow.show();
-      };
+      tableView.setData(currentData);
       tableView.addEventListener("click", function(e) {
         var webWindow;
         tweet = tweets[e.index];
@@ -184,4 +192,4 @@ getTweets = function(screen_name) {
   };
   return xhr.send();
 };
-getTweets(twitter_name);
+updateTimeline(screen_name, page);
