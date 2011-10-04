@@ -1,3 +1,0 @@
-[submodule "Resources/lib"]
-	path = Resources/lib
-	url = git://github.com/mogya/tm_twitter_api.git
