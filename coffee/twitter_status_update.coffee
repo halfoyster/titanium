@@ -203,7 +203,7 @@ Ti.App.twitterApi = new TwitterApi
 twitterApi = Ti.App.twitterApi
 twitterApi.init()
 
-tweet = (message) ->
+tweet = (message, latitude, longitude) ->
   params = {status: message}
   if latitude && longitude
     params['lat']  = latitude

@@ -87,109 +87,113 @@ endReloading = function() {
 };
 updateTimeline = function(screen_name, page) {
   var xhr;
-  xhr = Ti.Network.createHTTPClient();
-  xhr.timeout = 1000000;
-  xhr.open('GET', "http://api.twitter.com/1/statuses/user_timeline.json?screen_name=" + screen_name + "&page=" + page);
-  xhr.onload = function() {
-    var av, avatar, bgcolor, c, created_at, currentData, date_label, post_view, row, tweet, tweet_text, tweets, user, user_label, _ref;
-    try {
-      tweets = JSON.parse(this.responseText);
-      c = 0;
-      currentData = [];
-      while (c < tweets.length) {
-        tweet = tweets[c].text;
-        user = tweets[c].user.screen_name;
-        avatar = tweets[c].user.profile_image_url;
-        created_at = prettyDate(strtotime(tweets[c].created_at));
-        bgcolor = (_ref = (c % 2) === 0) != null ? _ref : {
-          '#fff': '#eee'
-        };
-        row = Ti.UI.createTableViewRow({
-          hasChild: true,
-          height: 'auto',
-          backgroundColor: bgcolor
+  if (Ti.Network.online === false) {
+    return alert('You are not connected to internet');
+  } else {
+    xhr = Ti.Network.createHTTPClient();
+    xhr.timeout = 1000000;
+    xhr.open('GET', "http://api.twitter.com/1/statuses/user_timeline.json?screen_name=" + screen_name + "&page=" + page);
+    xhr.onload = function() {
+      var av, avatar, bgcolor, c, created_at, currentData, date_label, post_view, row, tweet, tweet_text, tweets, user, user_label, _ref;
+      try {
+        tweets = JSON.parse(this.responseText);
+        c = 0;
+        currentData = [];
+        while (c < tweets.length) {
+          tweet = tweets[c].text;
+          user = tweets[c].user.screen_name;
+          avatar = tweets[c].user.profile_image_url;
+          created_at = prettyDate(strtotime(tweets[c].created_at));
+          bgcolor = (_ref = (c % 2) === 0) != null ? _ref : {
+            '#fff': '#eee'
+          };
+          row = Ti.UI.createTableViewRow({
+            hasChild: true,
+            height: 'auto',
+            backgroundColor: bgcolor
+          });
+          post_view = Ti.UI.createView({
+            height: 'auto',
+            layout: 'vertical',
+            left: 5,
+            top: 5,
+            bottom: 5,
+            right: 5
+          });
+          av = Ti.UI.createImageView({
+            image: avatar,
+            left: 0,
+            top: 0,
+            height: 48,
+            width: 48
+          });
+          post_view.add(av);
+          user_label = Ti.UI.createLabel({
+            text: user,
+            left: 54,
+            width: 120,
+            top: -48,
+            bottom: 2,
+            height: 16,
+            textAlign: 'left',
+            color: '#444444',
+            font: {
+              fontFamily: 'Trebuchet MS',
+              fontSize: 14,
+              fontWeight: 'bold'
+            }
+          });
+          post_view.add(user_label);
+          date_label = Ti.UI.createLabel({
+            text: created_at,
+            right: 0,
+            top: -18,
+            bottom: 2,
+            height: 14,
+            textAlign: 'right',
+            width: 110,
+            color: '#444444',
+            font: {
+              fontFamily: 'Trebuchet MS',
+              fontSize: 12
+            }
+          });
+          post_view.add(date_label);
+          tweet_text = Ti.UI.createLabel({
+            text: tweet,
+            left: 54,
+            top: 0,
+            bottom: 2,
+            height: 'auto',
+            width: 236,
+            textAlign: 'left',
+            font: {
+              fontSize: 14
+            }
+          });
+          post_view.add(tweet_text);
+          row.add(post_view);
+          row.className = 'item' + c;
+          currentData.push(row);
+          c++;
+        }
+        tableView.setData(currentData);
+        tableView.addEventListener("click", function(e) {
+          var webWindow;
+          tweet = tweets[e.index];
+          webWindow = Ti.UI.createWindow({
+            url: "twitter_tweet_window.js",
+            status_id: tweet.id_str,
+            screen_name: tweet.user.screen_name
+          });
+          return Ti.UI.currentTab.open(webWindow);
         });
-        post_view = Ti.UI.createView({
-          height: 'auto',
-          layout: 'vertical',
-          left: 5,
-          top: 5,
-          bottom: 5,
-          right: 5
-        });
-        av = Ti.UI.createImageView({
-          image: avatar,
-          left: 0,
-          top: 0,
-          height: 48,
-          width: 48
-        });
-        post_view.add(av);
-        user_label = Ti.UI.createLabel({
-          text: user,
-          left: 54,
-          width: 120,
-          top: -48,
-          bottom: 2,
-          height: 16,
-          textAlign: 'left',
-          color: '#444444',
-          font: {
-            fontFamily: 'Trebuchet MS',
-            fontSize: 14,
-            fontWeight: 'bold'
-          }
-        });
-        post_view.add(user_label);
-        date_label = Ti.UI.createLabel({
-          text: created_at,
-          right: 0,
-          top: -18,
-          bottom: 2,
-          height: 14,
-          textAlign: 'right',
-          width: 110,
-          color: '#444444',
-          font: {
-            fontFamily: 'Trebuchet MS',
-            fontSize: 12
-          }
-        });
-        post_view.add(date_label);
-        tweet_text = Ti.UI.createLabel({
-          text: tweet,
-          left: 54,
-          top: 0,
-          bottom: 2,
-          height: 'auto',
-          width: 236,
-          textAlign: 'left',
-          font: {
-            fontSize: 14
-          }
-        });
-        post_view.add(tweet_text);
-        row.add(post_view);
-        row.className = 'item' + c;
-        currentData.push(row);
-        c++;
+        return win.add(tableView);
+      } catch (error) {
+        return alert(error);
       }
-      tableView.setData(currentData);
-      tableView.addEventListener("click", function(e) {
-        var webWindow;
-        tweet = tweets[e.index];
-        webWindow = Ti.UI.createWindow({
-          url: "twitter_tweet_window.js",
-          status_id: tweet.id_str,
-          screen_name: tweet.user.screen_name
-        });
-        return Ti.UI.currentTab.open(webWindow);
-      });
-      return win.add(tableView);
-    } catch (error) {
-      return alert(error);
-    }
-  };
-  return xhr.send();
+    };
+    return xhr.send();
+  }
 };
 updateTimeline(screen_name, page);
