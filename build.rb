@@ -18,6 +18,9 @@ server = WEBrick::HTTPServer.new({
 
 last_pid = nil
 
+path = "/Users/hiroyukikondo/Library/Application Support/Titanium/mobilesdk/osx"
+sdk_version = "1.7.5"
+
 server.mount_proc("/run") { |req, res|
   if last_pid
     Process.kill('KILL', last_pid)
@@ -25,7 +28,7 @@ server.mount_proc("/run") { |req, res|
 
   last_pid = fork do
     # should be written in relative path...
-    exec "/Users/hiroyuki.kondo/Library/Application Support/Titanium/mobilesdk/osx/1.7.2/iphone/builder.py", "run", Dir.pwd
+    exec "#{path}/#{sdk_version}/iphone/builder.py", "run", Dir.pwd
   end
   # system "coffee -o "+Dir.pwd+"/Resources/js/ -c "+Dir.pwd+"/Resources/coffee/"
   res["content-type"] = "text/html; charset=utf-8"
